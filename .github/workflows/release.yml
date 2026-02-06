@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup MSVC environment
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: 4.1.0
+        
+    - name: Get version from tag
+      id: get_version
+      shell: pwsh
+      run: |
+        $version = "${{ github.ref_name }}".TrimStart('v')
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "Version: $version"
+
+    - name: Configure CMake
+      run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+      
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Package artifact
+      id: package
+      shell: pwsh
+      run: |
+        $exe = Get-ChildItem -Path build -Recurse -Filter windows-capture-zone.exe | Select-Object -First 1
+        if (-not $exe) {
+          throw "Не найден файл windows-capture-zone.exe после сборки."
+        }
+
+        New-Item -ItemType Directory -Force -Path "dist" | Out-Null
+        Copy-Item $exe.FullName -Destination "dist\"
+
+        $version = "${{ steps.get_version.outputs.VERSION }}"
+        $zipName = "windows-capture-zone-$version-win64.zip"
+        Compress-Archive -Path "dist\*" -DestinationPath $zipName -Force
+
+        echo "ASSET=$zipName" >> $env:GITHUB_OUTPUT
+
+    - name: Create Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: pwsh
+      run: |
+        $releaseNotes = @"
+        ## Added
+        - TBD
+
+        ## Changed
+        - TBD
+
+        ## Fixed
+        - TBD
+        "@
+        
+        gh release create ${{ github.ref_name }} `
+          --title "Release ${{ github.ref_name }}" `
+          --notes $releaseNotes `
+          --draft `
+          ${{ steps.package.outputs.ASSET }}

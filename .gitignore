@@ -1,0 +1,39 @@
+# Build output
+/build/
+/out/
+/cmake-build-*/
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/compile_commands.json
+
+# Binaries and intermediates
+*.exe
+*.dll
+*.lib
+*.pdb
+*.ilk
+*.obj
+*.o
+*.a
+*.so
+*.dylib
+*.out
+
+# IDEs
+/.vs/
+/.vscode/
+/.idea/
+*.user
+*.suo
+*.vcxproj*
+*.filters
+*.VC.db
+*.VC.opendb
+/ipch/
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
