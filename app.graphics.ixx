@@ -1,11 +1,11 @@
 module;
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
-#include "resource.h"
 
 #include <algorithm>
 #include <cstdlib>
 #include <windows.h>
+#include <shellapi.h>
 
 export module app.graphics;
 
@@ -61,9 +61,28 @@ int SnapIconSize(int desired) {
     return best;
 }
 
-HICON LoadIconResource(int resourceId, int size) {
-    return static_cast<HICON>(
-        LoadImageW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(resourceId), IMAGE_ICON, size, size, LR_DEFAULTCOLOR));
+HFONT CreateIconFont(int pixelSize) {
+    int height = -std::max(8, pixelSize);
+    HFONT font = CreateFontW(height, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                             CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
+                             L"Segoe MDL2 Assets");
+    if (font) {
+        return font;
+    }
+    return CreateFontW(height, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                       CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Segoe UI Symbol");
+}
+
+HICON LoadStockIcon(SHSTOCKICONID iconId, int size) {
+    SHSTOCKICONINFO info{};
+    info.cbSize = sizeof(info);
+
+    const int smallIconSize = GetSystemMetrics(SM_CXSMICON);
+    const UINT flags = SHGSI_ICON | (size <= smallIconSize ? SHGSI_SMALLICON : SHGSI_LARGEICON);
+    if (FAILED(SHGetStockIconInfo(iconId, flags, &info))) {
+        return nullptr;
+    }
+    return info.hIcon;
 }
 
 } // namespace
@@ -125,35 +144,32 @@ void DrawButtonBase(HDC hdc, const RECT& rect, bool active, bool hover) {
     FillRect(hdc, &rect, brush.get());
 }
 
-void DrawIcon(HDC hdc, const RECT& rect, HICON icon) {
-    if (!icon) {
+void DrawIcon(HDC hdc, const RECT& rect, wchar_t glyph) {
+    if (glyph == L'\0' || !g_state.iconFont) {
         return;
     }
-    int width = rect.right - rect.left;
-    int height = rect.bottom - rect.top;
-    int size = std::min(g_state.iconSize, std::min(width, height));
-    int x = rect.left + (width - size) / 2;
-    int y = rect.top + (height - size) / 2;
-    DrawIconEx(hdc, x, y, icon, size, size, 0, nullptr, DI_NORMAL);
+
+    ScopedSelect fontSelect(hdc, g_state.iconFont);
+    int oldBkMode = SetBkMode(hdc, TRANSPARENT);
+    COLORREF oldTextColor = SetTextColor(hdc, RGB(230, 230, 230));
+
+    wchar_t text[2] = {glyph, L'\0'};
+    RECT textRect = rect;
+    DrawTextW(hdc, text, 1, &textRect, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+
+    SetTextColor(hdc, oldTextColor);
+    SetBkMode(hdc, oldBkMode);
 }
 
 void DestroyIcons() {
-    if (g_state.lockIcon) {
-        DestroyIcon(g_state.lockIcon);
-        g_state.lockIcon = nullptr;
+    if (g_state.iconFont) {
+        DeleteObject(g_state.iconFont);
+        g_state.iconFont = nullptr;
     }
-    if (g_state.unlockIcon) {
-        DestroyIcon(g_state.unlockIcon);
-        g_state.unlockIcon = nullptr;
-    }
-    if (g_state.sizeIcon) {
-        DestroyIcon(g_state.sizeIcon);
-        g_state.sizeIcon = nullptr;
-    }
-    if (g_state.closeIcon) {
-        DestroyIcon(g_state.closeIcon);
-        g_state.closeIcon = nullptr;
-    }
+    g_state.lockGlyph = L'\0';
+    g_state.unlockGlyph = L'\0';
+    g_state.sizeGlyph = L'\0';
+    g_state.closeGlyph = L'\0';
 }
 
 void DestroyAppIcons() {
@@ -171,18 +187,19 @@ void ReloadIcons() {
     DestroyIcons();
     int desired = std::max(12, g_state.buttonSize - ScaleForDpi(4, g_state.dpi));
     g_state.iconSize = SnapIconSize(desired);
-    g_state.lockIcon = LoadIconResource(IDI_LOCK, g_state.iconSize);
-    g_state.unlockIcon = LoadIconResource(IDI_UNLOCK, g_state.iconSize);
-    g_state.sizeIcon = LoadIconResource(IDI_SIZE, g_state.iconSize);
-    g_state.closeIcon = LoadIconResource(IDI_CLOSE, g_state.iconSize);
+    g_state.iconFont = CreateIconFont(g_state.iconSize);
+    g_state.lockGlyph = L'\uE72E';
+    g_state.unlockGlyph = L'\uE785';
+    g_state.sizeGlyph = L'\uE713';
+    g_state.closeGlyph = L'\uE711';
 }
 
 void LoadAppIcons(UINT dpi) {
     DestroyAppIcons();
     int bigSize = GetSystemMetricsForDpi(SM_CXICON, dpi);
     int smallSize = GetSystemMetricsForDpi(SM_CXSMICON, dpi);
-    g_state.appIconBig = LoadIconResource(IDI_APP, bigSize);
-    g_state.appIconSmall = LoadIconResource(IDI_APP, smallSize);
+    g_state.appIconBig = LoadStockIcon(SIID_DESKTOPPC, bigSize);
+    g_state.appIconSmall = LoadStockIcon(SIID_DESKTOPPC, smallSize);
 }
 
 void ApplyAppIcons(HWND hwnd) {

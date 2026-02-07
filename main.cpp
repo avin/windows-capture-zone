@@ -83,14 +83,14 @@ LRESULT CALLBACK FrameProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
             }
 
             DrawButtonBase(hdc, g_state.lockRect, g_state.locked, g_state.hoverLock);
-            DrawIcon(hdc, g_state.lockRect, g_state.locked ? g_state.lockIcon : g_state.unlockIcon);
+            DrawIcon(hdc, g_state.lockRect, g_state.locked ? g_state.lockGlyph : g_state.unlockGlyph);
 
             if (!g_state.locked) {
                 DrawButtonBase(hdc, g_state.presetRect, false, g_state.hoverPreset);
-                DrawIcon(hdc, g_state.presetRect, g_state.sizeIcon);
+                DrawIcon(hdc, g_state.presetRect, g_state.sizeGlyph);
 
                 DrawButtonBase(hdc, g_state.closeRect, false, g_state.hoverClose);
-                DrawIcon(hdc, g_state.closeRect, g_state.closeIcon);
+                DrawIcon(hdc, g_state.closeRect, g_state.closeGlyph);
             }
 
             DrawBorder(hdc, client);

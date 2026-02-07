@@ -81,10 +81,11 @@ struct AppState {
     RECT lockRect{};
     RECT presetRect{};
     RECT closeRect{};
-    HICON lockIcon = nullptr;
-    HICON unlockIcon = nullptr;
-    HICON sizeIcon = nullptr;
-    HICON closeIcon = nullptr;
+    HFONT iconFont = nullptr;
+    wchar_t lockGlyph = L'\0';
+    wchar_t unlockGlyph = L'\0';
+    wchar_t sizeGlyph = L'\0';
+    wchar_t closeGlyph = L'\0';
     HICON appIconBig = nullptr;
     HICON appIconSmall = nullptr;
 };

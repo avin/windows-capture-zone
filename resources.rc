@@ -1,7 +1,0 @@
-#include "resource.h"
-
-IDI_APP ICON "assets/app.ico"
-IDI_LOCK ICON "assets/lock.ico"
-IDI_UNLOCK ICON "assets/unlock.ico"
-IDI_SIZE ICON "assets/size.ico"
-IDI_CLOSE ICON "assets/close.ico"
