@@ -113,6 +113,9 @@ RECT ClampToMonitor(const RECT& rect) {
 
 void ShowPresetMenu(HWND hwnd) {
     HMENU menu = CreatePopupMenu();
+    if (!menu) {
+        return;
+    }
     AppendMenuW(menu, MF_STRING, static_cast<UINT>(PresetId::Size1920x1080), L"1920 x 1080");
     AppendMenuW(menu, MF_STRING, static_cast<UINT>(PresetId::Size1600x900), L"1600 x 900");
     AppendMenuW(menu, MF_STRING, static_cast<UINT>(PresetId::Size1280x720), L"1280 x 720");
@@ -122,8 +125,26 @@ void ShowPresetMenu(HWND hwnd) {
     POINT pt{};
     GetCursorPos(&pt);
     SetForegroundWindow(hwnd);
-    TrackPopupMenu(menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, nullptr);
+    UINT command = TrackPopupMenu(menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
+                                  pt.x, pt.y, 0, hwnd, nullptr);
     DestroyMenu(menu);
+
+    if (command != 0) {
+        g_state.suppressPresetClickUntil = 0;
+        SendMessageW(hwnd, WM_COMMAND, MAKEWPARAM(command, 0), 0);
+        return;
+    }
+
+    POINT cursor{};
+    if (!g_state.locked && GetCursorPos(&cursor)) {
+        ScreenToClient(hwnd, &cursor);
+        UpdateButtonRects(hwnd);
+        if (PointInRect(g_state.presetRect, cursor)) {
+            g_state.suppressPresetClickUntil = GetTickCount64() + 250;
+            return;
+        }
+    }
+    g_state.suppressPresetClickUntil = 0;
 }
 
 void SetFrameTopMost(HWND hwnd, bool topMost) {
@@ -167,6 +188,7 @@ void SetLocked(HWND hwnd, bool locked) {
     g_state.locked = locked;
     g_state.hoverPreset = false;
     g_state.hoverClose = false;
+    g_state.suppressPresetClickUntil = 0;
     UpdateMetrics(g_state.dpi);
     UpdateCaptureFromFrame();
     UpdateLockedMouseThrough(hwnd);

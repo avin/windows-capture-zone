@@ -279,6 +279,11 @@ LRESULT CALLBACK FrameProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
                 return 0;
             }
             if (!g_state.locked && PointInRect(g_state.presetRect, pt)) {
+                if (g_state.suppressPresetClickUntil != 0 && GetTickCount64() <= g_state.suppressPresetClickUntil) {
+                    g_state.suppressPresetClickUntil = 0;
+                    return 0;
+                }
+                g_state.suppressPresetClickUntil = 0;
                 ShowPresetMenu(hwnd);
                 return 0;
             }

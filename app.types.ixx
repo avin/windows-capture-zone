@@ -68,6 +68,7 @@ struct AppState {
     bool hoverLock = false;
     bool hoverPreset = false;
     bool hoverClose = false;
+    ULONGLONG suppressPresetClickUntil = 0;
     bool dragInProgress = false;
     int topBarHeight = kBaseTopBarHeight;
     int borderThickness = kBaseBorderThickness;
