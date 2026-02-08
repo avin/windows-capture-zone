@@ -69,31 +69,55 @@ LRESULT CALLBACK FrameProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
             RECT client{};
             GetClientRect(hwnd, &client);
+            auto paintFrame = [&](HDC target) {
+                HBRUSH transparentBrush = CreateSolidBrush(kTransparentKey);
+                FillRect(target, &client, transparentBrush);
+                DeleteObject(transparentBrush);
 
-            HBRUSH transparentBrush = CreateSolidBrush(kTransparentKey);
-            FillRect(hdc, &client, transparentBrush);
-            DeleteObject(transparentBrush);
+                UpdateButtonRects(hwnd);
+                if (!g_state.locked) {
+                    HBRUSH topBrush = CreateSolidBrush(kTopBarColor);
+                    FillRect(target, &g_state.topBarRect, topBrush);
+                    DeleteObject(topBrush);
+                    DrawDragHandle(target, g_state.dragRect);
+                }
 
-            UpdateButtonRects(hwnd);
-            if (!g_state.locked) {
-                HBRUSH topBrush = CreateSolidBrush(kTopBarColor);
-                FillRect(hdc, &g_state.topBarRect, topBrush);
-                DeleteObject(topBrush);
-                DrawDragHandle(hdc, g_state.dragRect);
+                DrawButtonBase(target, g_state.lockRect, g_state.locked, g_state.hoverLock);
+                DrawIcon(target, g_state.lockRect, g_state.locked ? g_state.lockGlyph : g_state.unlockGlyph);
+
+                if (!g_state.locked) {
+                    DrawButtonBase(target, g_state.presetRect, false, g_state.hoverPreset);
+                    DrawIcon(target, g_state.presetRect, g_state.sizeGlyph);
+
+                    DrawButtonBase(target, g_state.closeRect, false, g_state.hoverClose);
+                    DrawIcon(target, g_state.closeRect, g_state.closeGlyph);
+                }
+
+                DrawBorder(target, client);
+            };
+
+            int width = client.right - client.left;
+            int height = client.bottom - client.top;
+            if (width > 0 && height > 0) {
+                HDC memDC = CreateCompatibleDC(hdc);
+                HBITMAP memBitmap = memDC ? CreateCompatibleBitmap(hdc, width, height) : nullptr;
+                if (memDC && memBitmap) {
+                    HGDIOBJ oldBitmap = SelectObject(memDC, memBitmap);
+                    paintFrame(memDC);
+                    BitBlt(hdc, 0, 0, width, height, memDC, 0, 0, SRCCOPY);
+                    SelectObject(memDC, oldBitmap);
+                    DeleteObject(memBitmap);
+                    DeleteDC(memDC);
+                } else {
+                    if (memBitmap) {
+                        DeleteObject(memBitmap);
+                    }
+                    if (memDC) {
+                        DeleteDC(memDC);
+                    }
+                    paintFrame(hdc);
+                }
             }
-
-            DrawButtonBase(hdc, g_state.lockRect, g_state.locked, g_state.hoverLock);
-            DrawIcon(hdc, g_state.lockRect, g_state.locked ? g_state.lockGlyph : g_state.unlockGlyph);
-
-            if (!g_state.locked) {
-                DrawButtonBase(hdc, g_state.presetRect, false, g_state.hoverPreset);
-                DrawIcon(hdc, g_state.presetRect, g_state.sizeGlyph);
-
-                DrawButtonBase(hdc, g_state.closeRect, false, g_state.hoverClose);
-                DrawIcon(hdc, g_state.closeRect, g_state.closeGlyph);
-            }
-
-            DrawBorder(hdc, client);
 
             EndPaint(hwnd, &ps);
             return 0;
