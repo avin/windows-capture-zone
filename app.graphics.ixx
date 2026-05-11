@@ -166,7 +166,7 @@ void DrawSlashedIcon(HDC hdc, const RECT& rect, wchar_t glyph) {
 
     int inset = std::max(4, ScaleForDpi(4, g_state.dpi));
     int width = std::max(2, ScaleForDpi(2, g_state.dpi));
-    ScopedPen pen(PS_SOLID, width, RGB(230, 230, 230));
+    ScopedPen pen(PS_SOLID, width, kBorderPausedColor);
     ScopedSelect penSelect(hdc, pen.get());
 
     MoveToEx(hdc, rect.left + inset, rect.bottom - inset, nullptr);

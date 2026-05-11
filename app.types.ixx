@@ -28,7 +28,7 @@ constexpr int kMinContentWidth = 320;
 constexpr int kMinContentHeight = 200;
 
 constexpr COLORREF kBorderColor = RGB(0, 200, 255);
-constexpr COLORREF kBorderPausedColor = RGB(150, 24, 36);
+constexpr COLORREF kBorderPausedColor = RGB(198, 0, 54);
 constexpr COLORREF kTopBarColor = RGB(26, 26, 26);
 constexpr COLORREF kButtonColor = RGB(40, 40, 40);
 constexpr COLORREF kButtonHoverColor = RGB(60, 60, 60);

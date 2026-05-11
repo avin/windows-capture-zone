@@ -60,12 +60,12 @@ void UpdateButtonRects(HWND hwnd) {
     g_state.dragRect = MakeRect(cursor, top, cursor + g_state.dragHandleWidth, top + g_state.topBarHeight);
     cursor = g_state.dragRect.right + g_state.buttonPadding;
 
+    g_state.pauseRect = MakeRect(cursor, contentTop, cursor + g_state.buttonSize, contentTop + g_state.buttonSize);
+    cursor = g_state.pauseRect.right + g_state.buttonPadding;
+
     g_state.presetRect =
         MakeRect(cursor, contentTop, cursor + g_state.presetButtonWidth, contentTop + g_state.buttonSize);
     cursor = g_state.presetRect.right + g_state.buttonPadding;
-
-    g_state.pauseRect = MakeRect(cursor, contentTop, cursor + g_state.buttonSize, contentTop + g_state.buttonSize);
-    cursor = g_state.pauseRect.right + g_state.buttonPadding;
 
     g_state.closeRect = MakeRect(cursor, contentTop, cursor + g_state.buttonSize, contentTop + g_state.buttonSize);
 }
