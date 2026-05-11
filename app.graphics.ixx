@@ -90,7 +90,7 @@ HICON LoadStockIcon(SHSTOCKICONID iconId, int size) {
 export namespace app {
 
 void DrawBorder(HDC hdc, const RECT& client) {
-    ScopedBrush brush(kBorderColor);
+    ScopedBrush brush(g_state.streamPaused ? kBorderPausedColor : kBorderColor);
     RECT top = MakeRect(0, 0, client.right, g_state.borderThickness);
     RECT bottom = MakeRect(0, client.bottom - g_state.borderThickness, client.right, client.bottom);
     RECT left = MakeRect(0, 0, g_state.borderThickness, client.bottom);
@@ -161,6 +161,18 @@ void DrawIcon(HDC hdc, const RECT& rect, wchar_t glyph) {
     SetBkMode(hdc, oldBkMode);
 }
 
+void DrawSlashedIcon(HDC hdc, const RECT& rect, wchar_t glyph) {
+    DrawIcon(hdc, rect, glyph);
+
+    int inset = std::max(4, ScaleForDpi(4, g_state.dpi));
+    int width = std::max(2, ScaleForDpi(2, g_state.dpi));
+    ScopedPen pen(PS_SOLID, width, RGB(230, 230, 230));
+    ScopedSelect penSelect(hdc, pen.get());
+
+    MoveToEx(hdc, rect.left + inset, rect.bottom - inset, nullptr);
+    LineTo(hdc, rect.right - inset, rect.top + inset);
+}
+
 void DestroyIcons() {
     if (g_state.iconFont) {
         DeleteObject(g_state.iconFont);
@@ -191,7 +203,17 @@ void ReloadIcons() {
     g_state.lockGlyph = L'\uE72E';
     g_state.unlockGlyph = L'\uE785';
     g_state.sizeGlyph = L'\uE713';
+    g_state.viewGlyph = L'\uE890';
     g_state.closeGlyph = L'\uE711';
+}
+
+void DrawPausedCapturePlaceholder(HDC hdc, const RECT& client) {
+    if (client.right <= client.left || client.bottom <= client.top) {
+        return;
+    }
+
+    ScopedBrush brush(RGB(86, 35, 130));
+    FillRect(hdc, &client, brush.get());
 }
 
 void LoadAppIcons(UINT dpi) {

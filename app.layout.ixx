@@ -44,6 +44,7 @@ void UpdateButtonRects(HWND hwnd) {
 
     int unlockedWidth = g_state.buttonPadding * 2 + g_state.dragHandleWidth + g_state.buttonPadding +
                         g_state.buttonSize + g_state.buttonPadding + g_state.presetButtonWidth + g_state.buttonPadding +
+                        g_state.buttonSize + g_state.buttonPadding +
                         g_state.buttonSize;
 
     int barLeft = g_state.borderThickness + ScaleForDpi(kControlLeftOffset, g_state.dpi);
@@ -63,12 +64,16 @@ void UpdateButtonRects(HWND hwnd) {
         MakeRect(cursor, contentTop, cursor + g_state.presetButtonWidth, contentTop + g_state.buttonSize);
     cursor = g_state.presetRect.right + g_state.buttonPadding;
 
+    g_state.pauseRect = MakeRect(cursor, contentTop, cursor + g_state.buttonSize, contentTop + g_state.buttonSize);
+    cursor = g_state.pauseRect.right + g_state.buttonPadding;
+
     g_state.closeRect = MakeRect(cursor, contentTop, cursor + g_state.buttonSize, contentTop + g_state.buttonSize);
 }
 
 int GetUnlockedControlWidth() {
     return g_state.buttonPadding * 2 + g_state.buttonSize + g_state.buttonPadding + g_state.dragHandleWidth +
-           g_state.buttonPadding + g_state.presetButtonWidth + g_state.buttonPadding + g_state.buttonSize;
+           g_state.buttonPadding + g_state.presetButtonWidth + g_state.buttonPadding + g_state.buttonSize +
+           g_state.buttonPadding + g_state.buttonSize;
 }
 
 int GetControlLeftOffset() {

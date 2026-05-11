@@ -89,6 +89,13 @@ LRESULT CALLBACK FrameProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
                     DrawButtonBase(target, g_state.presetRect, false, g_state.hoverPreset);
                     DrawIcon(target, g_state.presetRect, g_state.sizeGlyph);
 
+                    DrawButtonBase(target, g_state.pauseRect, false, g_state.hoverPause);
+                    if (g_state.streamPaused) {
+                        DrawSlashedIcon(target, g_state.pauseRect, g_state.viewGlyph);
+                    } else {
+                        DrawIcon(target, g_state.pauseRect, g_state.viewGlyph);
+                    }
+
                     DrawButtonBase(target, g_state.closeRect, false, g_state.hoverClose);
                     DrawIcon(target, g_state.closeRect, g_state.closeGlyph);
                 }
@@ -198,6 +205,9 @@ LRESULT CALLBACK FrameProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
             if (!g_state.locked && PointInRect(g_state.presetRect, pt)) {
                 return HTCLIENT;
             }
+            if (!g_state.locked && PointInRect(g_state.pauseRect, pt)) {
+                return HTCLIENT;
+            }
             if (!g_state.locked && PointInRect(g_state.closeRect, pt)) {
                 return HTCLIENT;
             }
@@ -239,12 +249,14 @@ LRESULT CALLBACK FrameProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
             UpdateButtonRects(hwnd);
             bool hoverLock = PointInRect(g_state.lockRect, pt);
             bool hoverPreset = !g_state.locked && PointInRect(g_state.presetRect, pt);
+            bool hoverPause = !g_state.locked && PointInRect(g_state.pauseRect, pt);
             bool hoverClose = !g_state.locked && PointInRect(g_state.closeRect, pt);
 
             if (hoverLock != g_state.hoverLock || hoverPreset != g_state.hoverPreset ||
-                hoverClose != g_state.hoverClose) {
+                hoverPause != g_state.hoverPause || hoverClose != g_state.hoverClose) {
                 g_state.hoverLock = hoverLock;
                 g_state.hoverPreset = hoverPreset;
+                g_state.hoverPause = hoverPause;
                 g_state.hoverClose = hoverClose;
                 InvalidateRect(hwnd, nullptr, FALSE);
             }
@@ -263,9 +275,10 @@ LRESULT CALLBACK FrameProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
         }
         case WM_MOUSELEAVE:
             g_state.trackingMouse = false;
-            if (g_state.hoverLock || g_state.hoverPreset || g_state.hoverClose) {
+            if (g_state.hoverLock || g_state.hoverPreset || g_state.hoverPause || g_state.hoverClose) {
                 g_state.hoverLock = false;
                 g_state.hoverPreset = false;
+                g_state.hoverPause = false;
                 g_state.hoverClose = false;
                 InvalidateRect(hwnd, nullptr, FALSE);
             }
@@ -285,6 +298,10 @@ LRESULT CALLBACK FrameProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
                 }
                 g_state.suppressPresetClickUntil = 0;
                 ShowPresetMenu(hwnd);
+                return 0;
+            }
+            if (!g_state.locked && PointInRect(g_state.pauseRect, pt)) {
+                SetStreamPaused(hwnd, !g_state.streamPaused);
                 return 0;
             }
             if (!g_state.locked && PointInRect(g_state.closeRect, pt)) {
@@ -342,6 +359,17 @@ LRESULT CALLBACK CaptureProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         }
         case WM_ERASEBKGND:
             return 1;
+        case WM_PAINT: {
+            PAINTSTRUCT ps{};
+            HDC hdc = BeginPaint(hwnd, &ps);
+            if (g_state.streamPaused) {
+                RECT client{};
+                GetClientRect(hwnd, &client);
+                DrawPausedCapturePlaceholder(hdc, client);
+            }
+            EndPaint(hwnd, &ps);
+            return 0;
+        }
         case WM_CLOSE:
             DestroyWindow(hwnd);
             return 0;

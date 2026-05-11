@@ -28,6 +28,7 @@ constexpr int kMinContentWidth = 320;
 constexpr int kMinContentHeight = 200;
 
 constexpr COLORREF kBorderColor = RGB(0, 200, 255);
+constexpr COLORREF kBorderPausedColor = RGB(150, 24, 36);
 constexpr COLORREF kTopBarColor = RGB(26, 26, 26);
 constexpr COLORREF kButtonColor = RGB(40, 40, 40);
 constexpr COLORREF kButtonHoverColor = RGB(60, 60, 60);
@@ -67,7 +68,9 @@ struct AppState {
     bool trackingMouse = false;
     bool hoverLock = false;
     bool hoverPreset = false;
+    bool hoverPause = false;
     bool hoverClose = false;
+    bool streamPaused = false;
     ULONGLONG suppressPresetClickUntil = 0;
     bool dragInProgress = false;
     int topBarHeight = kBaseTopBarHeight;
@@ -81,11 +84,13 @@ struct AppState {
     RECT dragRect{};
     RECT lockRect{};
     RECT presetRect{};
+    RECT pauseRect{};
     RECT closeRect{};
     HFONT iconFont = nullptr;
     wchar_t lockGlyph = L'\0';
     wchar_t unlockGlyph = L'\0';
     wchar_t sizeGlyph = L'\0';
+    wchar_t viewGlyph = L'\0';
     wchar_t closeGlyph = L'\0';
     HICON appIconBig = nullptr;
     HICON appIconSmall = nullptr;

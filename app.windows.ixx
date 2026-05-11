@@ -73,6 +73,12 @@ void UpdateCaptureFromFrame() {
     SetWindowPos(g_state.capture, nullptr, source.left, source.top, width, height,
                  SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW);
     SetWindowPos(g_state.magnifier, nullptr, 0, 0, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+
+    if (g_state.streamPaused) {
+        InvalidateRect(g_state.capture, nullptr, FALSE);
+        return;
+    }
+
     MagSetWindowSource(g_state.magnifier, source);
     InvalidateRect(g_state.magnifier, nullptr, FALSE);
 }
@@ -187,11 +193,33 @@ void UpdateLockedMouseThrough(HWND hwnd) {
 void SetLocked(HWND hwnd, bool locked) {
     g_state.locked = locked;
     g_state.hoverPreset = false;
+    g_state.hoverPause = false;
     g_state.hoverClose = false;
     g_state.suppressPresetClickUntil = 0;
     UpdateMetrics(g_state.dpi);
     UpdateCaptureFromFrame();
     UpdateLockedMouseThrough(hwnd);
+    InvalidateRect(hwnd, nullptr, TRUE);
+}
+
+void SetStreamPaused(HWND hwnd, bool paused) {
+    if (g_state.streamPaused == paused) {
+        return;
+    }
+
+    g_state.streamPaused = paused;
+
+    if (g_state.magnifier) {
+        ShowWindow(g_state.magnifier, paused ? SW_HIDE : SW_SHOW);
+    }
+
+    UpdateCaptureFromFrame();
+    if (!paused && g_state.magnifier) {
+        InvalidateRect(g_state.magnifier, nullptr, FALSE);
+    }
+    if (g_state.capture) {
+        InvalidateRect(g_state.capture, nullptr, TRUE);
+    }
     InvalidateRect(hwnd, nullptr, TRUE);
 }
 
