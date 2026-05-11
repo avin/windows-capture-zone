@@ -5,7 +5,7 @@ module;
 #include <algorithm>
 #include <cstdlib>
 #include <windows.h>
-#include <shellapi.h>
+#include "resource.h"
 
 export module app.graphics;
 
@@ -73,16 +73,9 @@ HFONT CreateIconFont(int pixelSize) {
                        CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, L"Segoe UI Symbol");
 }
 
-HICON LoadStockIcon(SHSTOCKICONID iconId, int size) {
-    SHSTOCKICONINFO info{};
-    info.cbSize = sizeof(info);
-
-    const int smallIconSize = GetSystemMetrics(SM_CXSMICON);
-    const UINT flags = SHGSI_ICON | (size <= smallIconSize ? SHGSI_SMALLICON : SHGSI_LARGEICON);
-    if (FAILED(SHGetStockIconInfo(iconId, flags, &info))) {
-        return nullptr;
-    }
-    return info.hIcon;
+HICON LoadAppIcon(int size) {
+    return static_cast<HICON>(LoadImageW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDI_APP_ICON), IMAGE_ICON,
+                                         size, size, LR_DEFAULTCOLOR));
 }
 
 } // namespace
@@ -220,8 +213,8 @@ void LoadAppIcons(UINT dpi) {
     DestroyAppIcons();
     int bigSize = GetSystemMetricsForDpi(SM_CXICON, dpi);
     int smallSize = GetSystemMetricsForDpi(SM_CXSMICON, dpi);
-    g_state.appIconBig = LoadStockIcon(SIID_DESKTOPPC, bigSize);
-    g_state.appIconSmall = LoadStockIcon(SIID_DESKTOPPC, smallSize);
+    g_state.appIconBig = LoadAppIcon(bigSize);
+    g_state.appIconSmall = LoadAppIcon(smallSize);
 }
 
 void ApplyAppIcons(HWND hwnd) {
