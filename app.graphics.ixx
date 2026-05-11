@@ -212,7 +212,7 @@ void DrawPausedCapturePlaceholder(HDC hdc, const RECT& client) {
         return;
     }
 
-    ScopedBrush brush(RGB(86, 35, 130));
+    ScopedBrush brush(RGB(15, 16, 32));
     FillRect(hdc, &client, brush.get());
 }
 
