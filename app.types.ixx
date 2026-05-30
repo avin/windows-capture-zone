@@ -41,6 +41,7 @@ constexpr int kControlLeftOffset = 100;
 constexpr LPCWSTR kRegistryPath = L"Software\\windows-capture-zone";
 
 enum class PresetId : UINT {
+    ToggleCursorCapture = 1000,
     Size1920x1080 = 1001,
     Size1600x900 = 1002,
     Size1280x720 = 1003,
@@ -55,6 +56,7 @@ struct WindowSettings {
     int width = 0;
     int height = 0;
     bool locked = false;
+    bool captureCursor = false;
 };
 
 struct AppState {
@@ -71,6 +73,7 @@ struct AppState {
     bool hoverPause = false;
     bool hoverClose = false;
     bool streamPaused = false;
+    bool captureCursor = false;
     ULONGLONG suppressPresetClickUntil = 0;
     bool dragInProgress = false;
     int topBarHeight = kBaseTopBarHeight;

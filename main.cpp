@@ -312,6 +312,9 @@ LRESULT CALLBACK FrameProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
         }
         case WM_COMMAND: {
             switch (LOWORD(wparam)) {
+                case static_cast<UINT>(PresetId::ToggleCursorCapture):
+                    SetCaptureCursor(hwnd, !g_state.captureCursor);
+                    return 0;
                 case static_cast<UINT>(PresetId::Size1920x1080):
                     ApplyPresetSize(hwnd, 1920, 1080);
                     return 0;
@@ -341,8 +344,13 @@ LRESULT CALLBACK CaptureProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
         case WM_CREATE: {
             g_state.capture = hwnd;
 
-            g_state.magnifier = CreateWindowExW(0, WC_MAGNIFIER, nullptr, WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, hwnd,
-                                                nullptr, reinterpret_cast<LPCREATESTRUCT>(lparam)->hInstance, nullptr);
+            DWORD magnifierStyle = WS_CHILD | WS_VISIBLE;
+            if (g_state.captureCursor) {
+                magnifierStyle |= MS_SHOWMAGNIFIEDCURSOR;
+            }
+            g_state.magnifier =
+                CreateWindowExW(0, WC_MAGNIFIER, nullptr, magnifierStyle, 0, 0, 1, 1, hwnd, nullptr,
+                                reinterpret_cast<LPCREATESTRUCT>(lparam)->hInstance, nullptr);
             if (!g_state.magnifier) {
                 return -1;
             }
@@ -354,6 +362,7 @@ LRESULT CALLBACK CaptureProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
             MagSetWindowTransform(g_state.magnifier, &transform);
 
             EnsureMagnifierFilter();
+            ApplyCaptureCursorStyle();
             UpdateCaptureFromFrame();
             return 0;
         }
@@ -400,6 +409,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int cmdShow) {
     WindowSettings settings = LoadSettings();
 
     g_state.locked = settings.locked;
+    g_state.captureCursor = settings.captureCursor;
 
     UINT initialDpi = GetDpiForSystem();
     UpdateMetrics(initialDpi);

@@ -39,6 +39,29 @@ void EnsureMagnifierFilter() {
     MagSetWindowFilterList(g_state.magnifier, MW_FILTERMODE_EXCLUDE, 2, excluded);
 }
 
+void ApplyCaptureCursorStyle() {
+    if (!g_state.magnifier) {
+        return;
+    }
+
+    LONG_PTR style = GetWindowLongPtrW(g_state.magnifier, GWL_STYLE);
+    bool isEnabled = (style & MS_SHOWMAGNIFIEDCURSOR) != 0;
+    if (isEnabled == g_state.captureCursor) {
+        return;
+    }
+
+    if (g_state.captureCursor) {
+        style |= MS_SHOWMAGNIFIEDCURSOR;
+    } else {
+        style &= ~MS_SHOWMAGNIFIEDCURSOR;
+    }
+
+    SetWindowLongPtrW(g_state.magnifier, GWL_STYLE, style);
+    SetWindowPos(g_state.magnifier, nullptr, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    InvalidateRect(g_state.magnifier, nullptr, FALSE);
+}
+
 RECT GetFrameContentRectScreen() {
     RECT client{};
     GetClientRect(g_state.frame, &client);
@@ -122,6 +145,9 @@ void ShowPresetMenu(HWND hwnd) {
     if (!menu) {
         return;
     }
+    UINT cursorFlags = MF_STRING | (g_state.captureCursor ? MF_CHECKED : MF_UNCHECKED);
+    AppendMenuW(menu, cursorFlags, static_cast<UINT>(PresetId::ToggleCursorCapture), L"Show mouse cursor");
+    AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     AppendMenuW(menu, MF_STRING, static_cast<UINT>(PresetId::Size1920x1080), L"1920 x 1080");
     AppendMenuW(menu, MF_STRING, static_cast<UINT>(PresetId::Size1600x900), L"1600 x 900");
     AppendMenuW(menu, MF_STRING, static_cast<UINT>(PresetId::Size1280x720), L"1280 x 720");
@@ -220,6 +246,17 @@ void SetStreamPaused(HWND hwnd, bool paused) {
     if (g_state.capture) {
         InvalidateRect(g_state.capture, nullptr, TRUE);
     }
+    InvalidateRect(hwnd, nullptr, TRUE);
+}
+
+void SetCaptureCursor(HWND hwnd, bool enabled) {
+    if (g_state.captureCursor == enabled) {
+        return;
+    }
+
+    g_state.captureCursor = enabled;
+    ApplyCaptureCursorStyle();
+    UpdateCaptureFromFrame();
     InvalidateRect(hwnd, nullptr, TRUE);
 }
 

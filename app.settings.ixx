@@ -47,6 +47,10 @@ WindowSettings LoadSettings() {
     if (RegGetValueW(key, nullptr, L"Locked", RRF_RT_DWORD, nullptr, &value, &size) == ERROR_SUCCESS) {
         settings.locked = value != 0;
     }
+    size = sizeof(value);
+    if (RegGetValueW(key, nullptr, L"CaptureCursor", RRF_RT_DWORD, nullptr, &value, &size) == ERROR_SUCCESS) {
+        settings.captureCursor = value != 0;
+    }
 
     settings.hasPlacement = hasX && hasY && hasW && hasH;
 
@@ -74,6 +78,8 @@ void SaveSettings(HWND hwnd) {
     RegSetValueExW(key, L"H", 0, REG_DWORD, reinterpret_cast<const BYTE*>(&value), sizeof(value));
     value = static_cast<DWORD>(g_state.locked ? 1 : 0);
     RegSetValueExW(key, L"Locked", 0, REG_DWORD, reinterpret_cast<const BYTE*>(&value), sizeof(value));
+    value = static_cast<DWORD>(g_state.captureCursor ? 1 : 0);
+    RegSetValueExW(key, L"CaptureCursor", 0, REG_DWORD, reinterpret_cast<const BYTE*>(&value), sizeof(value));
 
     RegCloseKey(key);
 }
